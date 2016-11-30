@@ -1,0 +1,160 @@
+\documentclass{beamer}
+\usetheme{Boadilla}
+\usecolortheme{fly}
+
+\title{Comp 6321 - Machine Learning}
+\subtitle{Using Neural Nets for game-playing}
+\author{Federico O'Reilly Regueiro}
+\institute{Concordia University}
+\date{\today}
+
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\setbeamercovered{transparent}
+
+\section{Problem Statement}
+\begin{frame}
+\frametitle{Problem statement}
+A zero-sum, perfect-knowledge (no chance involved) competitive game is a bounded problem space with a goal and a clear set of rules to navigate the state-space
+
+Nice toy-representation of reality
+
+How can we train a machine to learn a game?
+
+Old question for AI, now solved for GO!
+**lookup AIMA - games for background
+
+State space - game dependent\\
+
+exemplify state-space\\
+
+Minimax\\
+
+Tic-tac-toe
+Checkers
+Othello
+Chess
+GO - $10^{761} possible games!$
+
+How can a machine learn to successfully navigate such a space (ie to win)
+\end{frame}
+
+\begin{frame}
+\frametitle{Problem statement}
+\end{frame}
+
+\section{Approaches and solutions}
+
+\begin{frame}
+\frametitle{Approaches and solutions - common elements}
+\begin{itemize}
+\item<1-> Classification problem
+\begin{itemize}
+\item<2,4> Dual class\\ \pause given a game-state, what are the odds of winning 
+\begin{itemize}
+\item<4> Look ahead n-moves - (n-ply) - then decide best path given leaf `value'
+\end{itemize}
+\item<3,5> Multi-class \\ \pause given a game-state, what is the best next move
+\begin{itemize}
+\item<5-> Learn a `policy' for action given a state $P(a | s)$
+\end{itemize}
+\end{itemize}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Approaches and solutions to the problem}
+\begin{itemize}
+\item<1->Rule-based approach dependent on expert knowledge
+\begin{itemize}
+\item<2>e.g. Deep Blue
+\end{itemize}
+\item<3->Supervised learning - collect labeled states and train
+\begin{itemize}
+\item<4,5>Also depends on human expert knowledge
+\item<5>Labor intensive collection and labeling
+\end{itemize}
+\item<6->Genetic optimizations - Evolutionary NNs
+\begin{itemize}
+\item<7,8>Does not exploit NNs learning capabilities\\ but won't get stuck on local minima...
+\item<8>Slow to converge
+\item<9>Capable of finding innovative strategies \cite{Moriarty93evolvingcomplex} \cite{chellapilla1999evolution}
+\end{itemize}
+\item<10->Reinforcement learning
+\begin{itemize}
+\item<11,12,13,14,15>TD-learning 
+	\begin{itemize}
+	\item<12>Tesauro's TD-Backgammon - chance element
+	\end{itemize}
+\item<13,14,15>Like having sparse and time-delayed labels
+\item<14,15>Credit assignment problem
+\item<15>explore-exploit dilemma
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\subsection{Current state-of-the-art}
+\begin{frame}
+\frametitle{Current state-of-the-art}
+\begin{itemize}
+\item<1->Alpha-go
+\begin{itemize}
+\item<2,3>Two policy convolutional networks - 1 large, 1  small - prune search tree\\$TD(\lambda)$
+\item<3>One Fully connected - predict win\\validation
+\end{itemize}
+\item<4->DeepMind Atari deep reinforcement learning
+\begin{itemize}
+\item<5>Deep neural nets meet $TD(\lambda)$
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\subsection{Current project state}
+\begin{frame}
+\frametitle{Current project state - discarded approaches}
+\begin{itemize}
+\item<1->Supervised Learning
+\begin{itemize}
+\item<2>Acquiring sets is a cumbersome task\\ requires an overhead outside of ML - eg Edax
+\end{itemize}
+\item<3->Rule-based
+\begin{itemize}
+\item<4>Heuristic - Decision tree - in place but focus is on nets
+\end{itemize}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Current project state - narrowed approaches}
+\begin{itemize}
+\item<1->TD learning
+\begin{itemize}
+\item<2,3>Similar to back propagation but recurses temporally
+\item<3>$\Delta_{w_t} = \alpha(P_{t+1} - P_t)\nabla_w P_t$
+\item<4->Based on Leouski and Utgoff's paper\cite{Leouski96whata}
+\item<5>They use symmetry and weight sharing - 96 h.u. - turn into conv net
+\end{itemize}
+\item<6->ENN
+\begin{itemize}
+\item<7>Based on Chelapilla and Fogel\cite{chellapilla1999evolution}
+\end{itemize}
+\end{itemize}
+
+\end{frame}
+
+
+\section{References}
+
+\begin{frame}%[allowframebreaks]
+        \frametitle{References}
+        \bibliographystyle{plain} % amsalpha for shorter layout apalike for longer?
+        \bibliography{../ML-AI-proj-2016}
+\end{frame}
+\end{document}
