@@ -11,7 +11,10 @@ PLY = 1
 session = tf.Session()
 game = o.game()
 on = otnet.othello_net(session)
-
+score_series = []
+wins = 0
+losses = 0
+ties = 0
 
 def batch(turn):
     board_now = game.board
@@ -25,27 +28,42 @@ def batch(turn):
 
 def play_net(train=False):
     done = False
-    value_series = []
     tic = time.time()
+    global wins
+    global losses
+    global ties
+    global score_series
+    print(game.board.to_string())
     while not done:
         #net plays black TODO allow for playing white
         boards, moves = batch(b.BLACK)
         if boards:
+            print('Black plays:')
             idx, v = on.evaluate(boards, session)
             game.play_move(moves[idx], b.BLACK)
-            value_series.append(v)
+            print(game.board.to_string())
         else:
             game.pass_moves += 1
+        print('White\'s turn:')
         done = not game.play_random_turn(b.WHITE)
     outcome = game.board.get_score()
+    score_series.append(outcome)
+    if score_series[-1]['Black'] > score_series[-1]['White']:
+        wins += 1
+    elif score_series[-1]['Black'] < score_series[-1]['White']:
+        losses += 1
+    else:
+        ties += 1
     if train:
         # change outcome so that later on we can have the net play either white or black
         color_blind_outcome = {'net':outcome['Black'], 'opponent':outcome['White']}
-        on.train(color_blind_outcome, session)
+        total_loss = on.train(color_blind_outcome, session)
+        save_checkpoint()
     game.reset()
     on.reset_for_game()
     print('The round took:', time.time()-tic, ' seconds.')
-    return outcome
+    print('Up to now: ', wins, ' wins, ', losses, ' losses and ', ties, ' ties.')
+    return outcome, total_loss
 
 
 def save_checkpoint(path="./otnet.ckpt"):

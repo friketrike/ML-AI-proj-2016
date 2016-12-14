@@ -3,7 +3,8 @@ import tensorflow as tf
 #funciton to transform gradients
 def T(g, decay=1.0):
     #return decayed gradient
-    return decay*g
+	print('hello')
+	return decay*g
 
 # x variable
 x = tf.Variable(10.0,name='x')
@@ -27,16 +28,16 @@ with tf.Session() as sess:
     epochs = 10
     for i in range(epochs):
         b_val = 1.0 #fake data (in SGD it would be different on every epoch)
-        print '----'
+        print ('----')
         x_before_update = x.eval()
-        print 'before update',x_before_update
+        print ('before update',x_before_update)
 
         # compute gradients
         grad_vals = sess.run([g for (g,v) in gv], feed_dict={b: b_val})
-        print 'grad_vals: ',grad_vals
+        print ('grad_vals: ',grad_vals)
         # applies the gradients
         result = sess.run(apply_transform_op, feed_dict={b: b_val})
 
-        print 'value of x should be: ', x_before_update - T(grad_vals[0], decay=decay)
+        print ('value of x should be: ', x_before_update - T(grad_vals[0], decay=decay))
         x_after_update = x.eval()
-        print 'after update', x_after_update
+        print ('after update', x_after_update)

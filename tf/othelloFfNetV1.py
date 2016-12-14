@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 class othello_net():
     @staticmethod
@@ -19,17 +20,20 @@ class othello_net():
             self.initialize_fc_weights()
             self.initialize_board_placeholders()
             self.initialize_training_placeholders()
+            self.initialize_turn_boards()
+            self.initialize_train_vars()
             self.initialize_convs()
             self.initialize_ff()
             self.accum_grads = []
             self.discount_factor = 0.9
-            self.lambdaa = 0.6
-            self.loss = tf.reduce_mean(tf.square(tf.reduce_max(self.h_out) - self.target_val))
-            self.opt = tf.train.GradientDescentOptimizer(2e-3)
-            self.grad_var = self.opt.compute_gradients(self.loss, [self.conv1_weights, self.conv1_bias, 
+            self.lambdaa = 0.7
+            self.loss = 0.5*tf.reduce_mean(tf.square(tf.reduce_max(self.h_out) - self.target_val))
+            self.opt = tf.train.GradientDescentOptimizer(1e-2)
+            self.vars_list = [self.conv1_weights, self.conv1_bias, 
                 self.conv2_weights, self.conv2_bias, self.conv_diag_weights, self.conv_diag_bias,
-                self.fc1_weights, self.fc1_bias, self.fc2_weights, self.fc2_bias, self.out_weights, self.out_bias])
-            self.accum_grad = [(self.update_lambda_grads(g_v[0], index), g_v[1]) for index, g_v in enumerate(self.grad_var)]
+                self.fc1_weights, self.fc1_bias, self.fc2_weights, self.fc2_bias, self.out_weights, self.out_bias]
+            self.grad_var_list = self.opt.compute_gradients(self.loss, self.vars_list)
+            self.accum_grad = [(self.update_lambda_grads(g_v[0], index), g_v[1]) for index, g_v in enumerate(self.grad_var_list)]
             self.apply_lambda_gradients = self.opt.apply_gradients(self.accum_grad)
             self.boards_history = []
             session.run(tf.initialize_all_variables())
@@ -44,22 +48,17 @@ class othello_net():
         self.accum_grads = []
         self.boards_history = []
 
-    #keep the possibility of having a batch of boards along the 0th dimension
-    #even if for now we might only evaluate a single board
     def evaluate(self, boards, session):
-        if (session.run(tf.rank(boards)) == 2):
-            boards = [boards]
-        batch_size = session.run(tf.shape(boards))[0]
-        board_sym_tensor = self.turn_boards(boards)
-        half_sym = session.run(tf.slice(board_sym_tensor, [0, 0, 0, 0], [-1, -1, -1, 4]))
-        chopped = session.run(tf.slice(board_sym_tensor, [0, 0, 0, 0], [-1, 5, 5, -1]) )
-        diag = session.run(self.get_diagonal(boards, batch_size))
+        boards = np.asarray(boards)
+        if boards.ndim == 2:
+            boards = np.expand_dims(boards, axis=0)
+        batch_size = boards.shape[0]
+        diag = self.get_diagonal(boards)
         keep_prob = 1
-        v = session.run(self.h_out, feed_dict={self.boards_half_sym:half_sym, self.boards_chopped:chopped, 
+        v = session.run(self.h_out, feed_dict={self.boards:boards, 
             self.boards_diag:diag, self.keep_prob:keep_prob, self.batch_size:batch_size})
-        idx = session.run(tf.arg_max(v, 0))
-        #self.value_series.append(v[idx]) - can't do it this way as the optimizer can't compute gradients
-        self.boards_history.append([boards[idx]])
+        idx = np.argmax(v, 0)
+        self.boards_history.append(boards[idx])
         print('max value v at index idx is: ', v[idx][0][0], idx[0])
         return idx[0], v[idx][0][0] # TODO this looks ugly fix upstream
 
@@ -89,11 +88,10 @@ class othello_net():
         self.out_bias = self.bias_variables([1,1])
 
     def initialize_train_vars(self):
-        pass
+        self.epochs = tf.Variable(0)
 
     def initialize_board_placeholders(self):
-        self.boards_half_sym = tf.placeholder(tf.float32, shape=[None, 8, 8, 4])
-        self.boards_chopped = tf.placeholder(tf.float32, shape=[None, 5, 5, 8])
+        self.boards = tf.placeholder(tf.float32, shape=[None, 8, 8])
         self.boards_diag = tf.placeholder(tf.float32, shape=[None, 8, 1, 4])
 
     def initialize_training_placeholders(self):
@@ -101,30 +99,28 @@ class othello_net():
         self.keep_prob = tf.placeholder(tf.float32)
         self.target_val = tf.placeholder(tf.float32)
 
+    def initialize_turn_boards(self):
+        self.sym1 = tf.reverse(self.boards, [False, True, False])
+        self.sym2 = tf.reverse(self.boards, [False, False, True])
+        self.sym3 = tf.reverse(self.sym2, [False, True, False])
+        self.sym4 = tf.transpose(self.boards, perm=[0, 2, 1])
+        self.sym5 = tf.transpose(self.sym1, perm=[0, 2, 1])
+        self.sym6 = tf.transpose(self.sym2, perm=[0, 2, 1])
+        self.sym7 = tf.transpose(self.sym3, perm=[0, 2, 1])
+        self.board_sym_tensor = tf.transpose([self.boards, self.sym1, self.sym2, self.sym3, self.sym4, 
+            self.sym5, self.sym6, self.sym7], [1,2,3,0])    
+        self.boards_half_sym = tf.slice(self.board_sym_tensor, [0, 0, 0, 0], [-1, -1, -1, 4])
+        self.boards_chopped = tf.slice(self.board_sym_tensor, [0, 0, 0, 0], [-1, 5, 5, -1])
+
     @staticmethod
-    def turn_boards(boards):
-        sym1 = tf.reverse(boards, [False, True, False])
-        sym2 = tf.reverse(boards, [False, False, True])
-        sym3 = tf.reverse(sym2, [False, True, False])
-        sym4 = tf.transpose(boards, perm=[0, 2, 1])
-        sym5 = tf.transpose(sym1, perm=[0, 2, 1])
-        sym6 = tf.transpose(sym2, perm=[0, 2, 1])
-        sym7 = tf.transpose(sym3, perm=[0, 2, 1])
-        return tf.transpose([boards, sym1, sym2, sym3, sym4, sym5, sym6, sym7], [1,2,3,0])
-    
-    @staticmethod
-    def get_diagonal(boards, batch_size):
-        diag_batch = None
-        for idx in range(batch_size):
-            diag1 = tf.diag_part(boards[idx])
-            diag2 = tf.diag_part(tf.reverse(boards[idx], [False, True]))
-            diag3 = tf.reverse(diag1, [True])
-            diag4 = tf.reverse(diag2, [True])
-            if diag_batch is not None:
-                diag_batch = tf.concat(0, [diag_batch,tf.transpose([[[diag1, diag2, diag3, diag4]]], [0,3,1,2])])
-            else:
-                diag_batch = tf.transpose([[[diag1, diag2, diag3, diag4]]], [0,3,1,2])
-        return diag_batch
+    def get_diagonal(boards):
+        boards = np.asarray(boards)
+        diags1 = np.expand_dims(boards.diagonal(0, 1, 2), axis=2)
+        diags2 = np.expand_dims(np.fliplr(boards).diagonal(0,2,1), axis=2)
+        # Yes, lr does the trick, flipud actually reverses batches (dimension 0)
+        diags3 = np.fliplr(diags1)
+        diags4 = np.fliplr(diags2)
+        return np.stack([diags1, diags2, diags3, diags4], axis=3)
 
     def initialize_convs(self):
         self.h_conv1 = tf.nn.tanh(tf.nn.conv2d(self.boards_half_sym, 
@@ -151,15 +147,27 @@ class othello_net():
     # Do TD(0) for now, return grad instead of self.lambdaa * self.accum_grads[?] + grad
     # otherwise, accumulate lambda gradients from turn 1
     def update_lambda_grads(self, grad, idx):
-        print(grad)
-        if not self.accum_grads:
+        if not self.accum_grads or idx == self.accum_grads.__len__():
+            self.accum_grads.append(grad)
             return grad
+        else:
+            self.accum_grads[idx].__mul__(self.lambdaa)
+            self.accum_grads[idx] = tf.add(self.accum_grads[idx], grad)
+            #self.accum_grads[idx] *= self.lambdaa
+            #self.accum_grads[idx] += grad
+            #print(self.accum_grads[idx])
+            return self.accum_grads[idx]
+            
 
     def train(self, outcome, session):
+        #if self.apply_lambda_gradients is None:
+        #    self.accum_grad = [(self.update_lambda_grads(g_v[0], index), g_v[1]) for index, g_v in enumerate(self.grad_var)]
+        #    self.apply_lambda_gradients = self.opt.apply_gradients(self.accum_grad)
         gamma = self.discount_factor
         # add one to both scores for smoothing (avoid divide by zeros)
-        squashed_outcome = session.run(tf.nn.tanh((outcome['net'] + 1)/(outcome['opponent'] + 1)))
+        squashed_outcome = np.tanh((outcome['net'] + 1)/(outcome['opponent'] + 1))
         num_moves = self.boards_history.__len__()
+        total_loss = []
         all_gammas = 0
         for m in range(num_moves):
             all_gammas += gamma**m
@@ -167,20 +175,24 @@ class othello_net():
         target_series = []
         target_t = 0
         temp = discounted_score
-        # implement TD(0) for starters, lambda would be a nice step further
+        print('Epoch: ', self.epochs.eval(session=session), 'Training on moves, might take a moment')
         for m in range(num_moves):
-            print('Training on move: ', m, ' ...')
+            #print(m, end=', ')
             target_t += temp
             temp *= gamma
-            #target_series.append(temp1)
             batch_size = 1
             keep_prob = 0.7
-            board_sym_tensor = self.turn_boards(self.boards_history[m])
-            half_sym = session.run(tf.slice(board_sym_tensor, [0, 0, 0, 0], [-1, -1, -1, 4]))
-            chopped = session.run(tf.slice(board_sym_tensor, [0, 0, 0, 0], [-1, 5, 5, -1]) )
-            diag = session.run(self.get_diagonal(self.boards_history[m], batch_size))
-            session.run(self.apply_lambda_gradients, feed_dict={self.boards_half_sym:half_sym, self.boards_chopped:chopped, 
+            diag = self.get_diagonal(self.boards_history[m])
+            # grad_var = self.grad_var
+            self.accum_grad = [(self.update_lambda_grads(g_v[0], index), g_v[1]) for index, g_v in enumerate(self.grad_var_list)]
+            # TODO print loss
+            total_loss.append(self.loss.eval(session=session, feed_dict={self.boards:self.boards_history[m], 
+                self.boards_diag:diag, self.keep_prob:keep_prob, self.batch_size:batch_size, self.target_val:target_t}))
+            session.run(self.apply_lambda_gradients, feed_dict={self.boards:self.boards_history[m], 
                 self.boards_diag:diag, self.keep_prob:keep_prob, self.batch_size:batch_size, self.target_val:target_t})
-        
-
+            #session.run(self.opt.apply_gradients(grad_var), feed_dict={self.boards:self.boards_history[m], 
+            #    self.boards_diag:diag, self.keep_prob:keep_prob, self.batch_size:batch_size, self.target_val:target_t})
+        print('Total loss accross turns: ', np.sum(total_loss))    
+        self.epochs += 1
+        return(np.sum(total_loss))
 
