@@ -1,9 +1,10 @@
 \documentclass{beamer}
 \usetheme{Boadilla}
-\usecolortheme{fly}
+%\usecolortheme{fly}
+
 
 \title{Comp 6321 - Machine Learning}
-\subtitle{Using Neural Nets for game-playing}
+\subtitle{Using Neural Nets for playing othello}
 \author{Federico O'Reilly Regueiro}
 \institute{Concordia University}
 \date{\today}
@@ -17,36 +18,31 @@
 
 \setbeamercovered{transparent}
 
+%------------- Statement --------------------
 \section{Problem Statement}
 \begin{frame}
 \frametitle{Problem statement}
-A zero-sum, perfect-knowledge (no chance involved) competitive game is a bounded problem space with a goal and a clear set of rules to navigate the state-space
 
-Nice toy-representation of reality
-
-How can we train a machine to learn a game?
-
-Old question for AI, now solved for GO!
-**lookup AIMA - games for background
-
-State space - game dependent\\
-
-exemplify state-space\\
-
-Minimax\\
-
-Tic-tac-toe
-Checkers
-Othello
-Chess
-GO - $10^{761} possible games!$
-
-How can a machine learn to successfully navigate such a space (ie to win)
+\begin{itemize}
+\item<1->Zero-sum, perfect-knowledge (no chance involved) competitive-game\\
+\begin{itemize}
+\item<2,3,4>A sandbox - toy-representation of reality
+\item<3,4>bounded problem space with clear goal and set of rules
+\item<4>bounded, but can be huge (ie, GO - $10^{761}$ possible games!) \cite{AlphaGo}
+\end{itemize}
+\item<5->Can a machine learn to play 	
+\begin{itemize}
+\item<6,7,8>One of the oldest questions in AI
+\item<7,8>The trick is in finding ways to narrow the search   
+\item<8>Has been well answered, requiring less expert knowledge each  time
+\end{itemize}
+\item<9->Without expert knowledge (rules or labels)...
+\begin{itemize}
+\item<10>...the feedback becomes very sparse
+\end{itemize}
+\end{itemize}
 \end{frame}
 
-\begin{frame}
-\frametitle{Problem statement}
-\end{frame}
 
 \section{Approaches and solutions}
 
@@ -106,7 +102,7 @@ How can a machine learn to successfully navigate such a space (ie to win)
 \item<1->Alpha-go
 \begin{itemize}
 \item<2,3>Two policy convolutional networks - 1 large, 1  small - prune search tree\\$TD(\lambda)$
-\item<3>One Fully connected - predict win\\validation
+\item<3>One Fully connected - predict win\\value
 \end{itemize}
 \item<4->DeepMind Atari deep reinforcement learning
 \begin{itemize}
@@ -137,18 +133,19 @@ How can a machine learn to successfully navigate such a space (ie to win)
 \item<1->TD learning
 \begin{itemize}
 \item<2,3>Similar to back propagation but recurses temporally
-\item<3>$\Delta_{w_t} = \alpha(P_{t+1} - P_t)\nabla_w P_t$
+\item<3>$\Delta_{w_t} = \alpha(P_{t+1} - P_t)\sum_{k=1}^{t} \lambda^{t-k}\nabla_w P_k  ,\quad 0 \leq \lambda \leq 1 $
 \item<4->Based on Leouski and Utgoff's paper\cite{Leouski96whata}
-\item<5>They use symmetry and weight sharing - 96 h.u. - turn into conv net
+\item<5>They use symmetry, rotation and weight sharing - 96 h.u.\\ - turn into conv net
 \end{itemize}
 \item<6->ENN
 \begin{itemize}
-\item<7>Based on Chelapilla and Fogel\cite{chellapilla1999evolution}
+\item<7-11>Based on Chelapilla and Fogel\cite{chellapilla1999evolution}
+\item<8-10>Generation has 15 strategies, change vector $\sigma_i(j)$ for $j^{th}$ weight of $i^{th}$ strategy.
+\item<9>$\sigma'_i(j) = \sigma_i(j) exp(\tau N_j(0,1))$
+\item<10>$w'_i(j) = w_i(j) + \sigma_i(j)N_j(0,1)$
 \end{itemize}
 \end{itemize}
-
 \end{frame}
-
 
 \section{References}
 
