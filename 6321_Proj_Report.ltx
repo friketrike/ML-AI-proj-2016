@@ -43,21 +43,27 @@ There are several approaches to reinforcement learning, we focus on a particular
 somewhat evenly amonge the events leading to it. It does so by supposing that at any point in time the reward (or penalty) is equal to
 the reward gained at that point plus the sum of possible discounted future rewards. The rationale for discounting rewards over time 
 corresponds to the notion of rewards being more desirable now than later on\footnote{As Andrew Ng puts it in his online lecture
-on the topic, we might be dead tomorrow.\cite{AngRLlecture}}. This idea, central to temporal difference learning will be presented more
-fully in section \ref{whatSection}.% TODO define section
+on the topic, we might be dead tomorrow.\cite{AngRLlecture}}. Although there are several formulations,
+the two main approaches to TD differ in what they strive to learn.
+On the one hand we can learn the intrinsec value or potential reward
+of a given state or the worth of an action given a state, otherwise known as
+policy.
+
 
 Applications of reinforcement learning are varied and curretly under development in fields such as vehicle control, robotics,
 prediction of streaming data such as that of financial applications and gaming to name a few.
 
-As Moriarty and Miikkulainen put it, 'games are an important domain for studying problem-solving strategies.'\cite{Moriarty93evolvingcomplex}
-Traditionally games, due to their well-defined rules, state-transitions and goal, have made a good sandbox for the development of
+On their paper regarding evolutionary neural networks for playing othello, Moriarty and Miikkulainen state, 'games are an important domain for studying problem-solving strategies.'\cite{Moriarty93evolvingcomplex}
+Traditionally games, due to their well-defined rules, state-transitions and goals, have made a good sandbox for the development of
 any form of intelligent agents.
 
 Much has been achieved in this field, recently Google's Alpha-go bested top-ranking go-player Lee Sedol. Go had traditionally been
 seen as the unattainable goal in cmoputer game-playing given the vastness of it's state-space. Alpha-go achieved this outstanding 
-result with the combination of different strategies, via 3 Neural Networks\cite{AlphaGo}. Although there are several formulations,
-traditionally there have been two main approaches to temporal difference:
-to temporal difference learning
+result with the combination of different strategies, via 3 Neural 
+Networks\cite{AlphaGo}. One of the networks is a fully connected value 
+network while the other two are policy networks specialized for speed 
+and accuracy respectively. Another milestone in the field, is a deep policy network created by DeepMind which has learnt, with no human intervention, how to 
+play Atari games at a very high level.
 
 %------------------------ Description ------------------------%
 \section{Description of approach}
