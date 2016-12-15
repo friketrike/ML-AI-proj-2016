@@ -26,7 +26,7 @@ class othello_net():
             self.initialize_ff()
             self.accum_grads = []
             self.discount_factor = 0.9
-            self.lambdaa = 0.7
+            self.lambdaa = 0.3
             self.loss = 0.5*tf.reduce_mean(tf.square(tf.reduce_max(self.h_out) - self.target_val))
             self.opt = tf.train.GradientDescentOptimizer(1e-2)
             self.vars_list = [self.conv1_weights, self.conv1_bias, 
@@ -46,21 +46,26 @@ class othello_net():
 
     def reset_for_game(self):
         self.accum_grads = []
+        self.accum_grad = []
         self.boards_history = []
 
     def evaluate(self, boards, session):
-        boards = np.asarray(boards)
-        if boards.ndim == 2:
-            boards = np.expand_dims(boards, axis=0)
-        batch_size = boards.shape[0]
-        diag = self.get_diagonal(boards)
-        keep_prob = 1
-        v = session.run(self.h_out, feed_dict={self.boards:boards, 
-            self.boards_diag:diag, self.keep_prob:keep_prob, self.batch_size:batch_size})
-        idx = np.argmax(v, 0)
-        self.boards_history.append(boards[idx])
-        print('max value v at index idx is: ', v[idx][0][0], idx[0])
-        return idx[0], v[idx][0][0] # TODO this looks ugly fix upstream
+        with tf.Graph().as_default():
+            boards = np.asarray(boards)
+            if boards.ndim == 2:
+                boards = np.expand_dims(boards, axis=0)
+            batch_size = boards.shape[0]
+            diag = self.get_diagonal(boards)
+            keep_prob = 1
+            v = session.run(self.h_out, feed_dict={self.boards:boards, 
+                self.boards_diag:diag, self.keep_prob:keep_prob, self.batch_size:batch_size})
+            idx = np.argmax(v, 0)
+            self.boards_history.append(boards[idx])
+            print('max value v at index idx is: ', v[idx][0][0], idx[0])
+            return idx[0], v[idx][0][0] # TODO this looks ugly fix upstream
+    
+    def set_epochs(self, epochs):
+        self.epochs.assign(epochs)
 
     def initialize_conv1_weights(self):
         # create 8 by 1 filter - row/col
@@ -147,52 +152,56 @@ class othello_net():
     # Do TD(0) for now, return grad instead of self.lambdaa * self.accum_grads[?] + grad
     # otherwise, accumulate lambda gradients from turn 1
     def update_lambda_grads(self, grad, idx):
-        if not self.accum_grads or idx == self.accum_grads.__len__():
-            self.accum_grads.append(grad)
-            return grad
-        else:
-            self.accum_grads[idx].__mul__(self.lambdaa)
-            self.accum_grads[idx] = tf.add(self.accum_grads[idx], grad)
-            #self.accum_grads[idx] *= self.lambdaa
-            #self.accum_grads[idx] += grad
-            #print(self.accum_grads[idx])
-            return self.accum_grads[idx]
+        with tf.Graph().as_default():
+            if not self.accum_grads or idx == self.accum_grads.__len__():
+                self.accum_grads.append(grad)
+                return grad
+            else:
+                self.accum_grads[idx].__mul__(self.lambdaa)
+                self.accum_grads[idx] = tf.add(self.accum_grads[idx], grad)
+                #self.accum_grads[idx] *= self.lambdaa
+                #self.accum_grads[idx] += grad
+                #print(self.accum_grads[idx])
+                return self.accum_grads[idx]
             
 
     def train(self, outcome, session):
-        #if self.apply_lambda_gradients is None:
-        #    self.accum_grad = [(self.update_lambda_grads(g_v[0], index), g_v[1]) for index, g_v in enumerate(self.grad_var)]
-        #    self.apply_lambda_gradients = self.opt.apply_gradients(self.accum_grad)
-        gamma = self.discount_factor
-        # add one to both scores for smoothing (avoid divide by zeros)
-        squashed_outcome = np.tanh((outcome['net'] + 1)/(outcome['opponent'] + 1))
-        num_moves = self.boards_history.__len__()
-        total_loss = []
-        all_gammas = 0
-        for m in range(num_moves):
-            all_gammas += gamma**m
-        discounted_score = squashed_outcome/all_gammas
-        target_series = []
-        target_t = 0
-        temp = discounted_score
-        print('Epoch: ', self.epochs.eval(session=session), 'Training on moves, might take a moment')
-        for m in range(num_moves):
-            #print(m, end=', ')
-            target_t += temp
-            temp *= gamma
-            batch_size = 1
-            keep_prob = 0.7
-            diag = self.get_diagonal(self.boards_history[m])
-            # grad_var = self.grad_var
-            self.accum_grad = [(self.update_lambda_grads(g_v[0], index), g_v[1]) for index, g_v in enumerate(self.grad_var_list)]
-            # TODO print loss
-            total_loss.append(self.loss.eval(session=session, feed_dict={self.boards:self.boards_history[m], 
-                self.boards_diag:diag, self.keep_prob:keep_prob, self.batch_size:batch_size, self.target_val:target_t}))
-            session.run(self.apply_lambda_gradients, feed_dict={self.boards:self.boards_history[m], 
-                self.boards_diag:diag, self.keep_prob:keep_prob, self.batch_size:batch_size, self.target_val:target_t})
-            #session.run(self.opt.apply_gradients(grad_var), feed_dict={self.boards:self.boards_history[m], 
-            #    self.boards_diag:diag, self.keep_prob:keep_prob, self.batch_size:batch_size, self.target_val:target_t})
-        print('Total loss accross turns: ', np.sum(total_loss))    
-        self.epochs += 1
-        return(np.sum(total_loss))
+        with tf.Graph().as_default():
+            #if self.apply_lambda_gradients is None:
+            #    self.accum_grad = [(self.update_lambda_grads(g_v[0], index), g_v[1]) for index, g_v in enumerate(self.grad_var)]
+            #    self.apply_lambda_gradients = self.opt.apply_gradients(self.accum_grad)
+            gamma = self.discount_factor
+            # add one to both scores for smoothing (avoid divide by zeros)
+            squashed_outcome = np.tanh((outcome['net'] + 1)/(outcome['opponent'] + 1))
+            num_moves = self.boards_history.__len__()
+            total_loss = []
+            all_gammas = 0
+            for m in range(num_moves):
+                all_gammas += gamma**m
+            discounted_score = squashed_outcome/all_gammas
+            target_series = []
+            target_t = 0
+            temp = discounted_score
+            print('Epoch: ', self.epochs.eval(session=session), 'Training on moves, might take a moment')
+            for m in range(num_moves):
+                #print(m, end=', ')
+                target_t += temp
+                temp *= gamma
+                batch_size = 1
+                keep_prob = 0.7
+                diag = self.get_diagonal(self.boards_history[m])
+                # grad_var = self.grad_var
+                self_accum_grad = [(self.update_lambda_grads(g_v[0], index), g_v[1]) for index, g_v in enumerate(self.grad_var_list)]
+                # TODO print loss
+                total_loss.append(self.loss.eval(session=session, feed_dict={self.boards:self.boards_history[m], 
+                    self.boards_diag:diag, self.keep_prob:keep_prob, self.batch_size:batch_size, self.target_val:target_t}))
+                session.run(self.apply_lambda_gradients, feed_dict={self.boards:self.boards_history[m], 
+                    self.boards_diag:diag, self.keep_prob:keep_prob, self.batch_size:batch_size, self.target_val:target_t})
+                #session.run(self.opt.apply_gradients(grad_var), feed_dict={self.boards:self.boards_history[m], 
+                #    self.boards_diag:diag, self.keep_prob:keep_prob, self.batch_size:batch_size, self.target_val:target_t})
+            print('Total loss accross turns: ', np.sum(total_loss))    
+            self.epochs += 1
+            self.accum_grads = []
+            self.accum_grad = []
+            return(np.sum(total_loss))
 

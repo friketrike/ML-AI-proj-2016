@@ -71,6 +71,15 @@ def save_checkpoint(path="./otnet.ckpt"):
     save_path = saver.save(session, path)
     print('Saved checkpoint')
 
+def restore_checkpoint(path="./otnet.ckpt"):
+    global wins
+    global losses
+    global ties
+    saver = tf.train.Saver()
+    saver.restore(session, path)
+    print("Model restored.")
+    on.set_epochs(wins+losses+ties)
+
 def apply_action(values, root):
     idx = values.index(min(values))
     move = root.children[idx].move
