@@ -4,6 +4,34 @@
 
 \usepackage{titlesec}
 \usepackage{cite}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{float}
+
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=4
+}
+
 
 \renewcommand{\thesubsection}{\thesection.\alph{subsection}}
 
@@ -25,112 +53,299 @@
 \section{Introduction and motivation}
 The current proliferation of readily available data collections that has been spawned by the inetrnet
 has set the stage for machine learning as a pervasive means to develop different kinds of intelligent systems.
-
 It is, however, the heterogeneity and inconsistency of such data that limits what can be done by 
 regular supervised learning. Some of the biggest efforts put forth while tackling a supervised learning problem continue
 to be collection and curation of data sets. 
 
-Additionally, the notion of labeling all or most input instances becomes unwieldy under certain circumstances.
+Additionally, under certain circumstances, the notion of labeling all input instances becomes unwieldy; such as the case of the input frames of an automated vehicle.
 
 The lack of clear or constant labels to inputs gives rise to two forms of learning that are not supervised.
-Unsupervised learning, where algorithms aim at finding underlying structure in the data and reinforcement learning; which
-is in some ways between supervised learning and unsupervised learning, where 'labels' are sparse and time-delayed\cite{demistyfyingRL}. 
-This same sparsity and delay give rise to what is referred to as 'the credit assignment problem', where given a certain outcome from a 
-series of actions, it is difficult to ascertain which, if any, of the actions leading to the outcome bears the largest responsibility
-for the outcome.
+Fully unsupervised learning, under which algorithms aim at finding data's underlying structure; and reinforcement learning, which
+in some ways falls between supervised learning and unsupervised learning. In reinforcement rearning, 'labels' are 
+sparse and time-delayed\cite{demistyfyingRL}. 
+This sparsity and delay give rise to what is referred to as 'the credit assignment problem', where given a certain outcome from a 
+series of actions, it is difficult to ascertain which, if any, of the actions leading to the outcome should bear the largest responsibility
+for said outcome.
 
-There are several approaches to reinforcement learning, we focus on a particular type which tries to assign the credit of a given outcome
-somewhat evenly amonge the events leading to it. It does so by supposing that at any point in time the reward (or penalty) is equal to
+There are several approaches to reinforcement learning, we focus on a particular temporal-domain type which tries to assign the credit of a given outcome
+somewhat evenly among the events leading to it. It does so by supposing that at any point in time the reward (or penalty) is equal to
 the reward gained at that point plus the sum of possible discounted future rewards. The rationale for discounting rewards over time 
 corresponds to the notion of rewards being more desirable now than later on\footnote{As Andrew Ng puts it in his online lecture
 on the topic, we might be dead tomorrow.\cite{AngRLlecture}}. Although there are several formulations,
 the two main approaches to TD differ in what they strive to learn.
-On the one hand we can learn the intrinsec value or potential reward
-of a given state or the worth of an action given a state, otherwise known as
-policy.
+On the one hand we can learn the intrinsic value or potential reward
+of a given state, and on the other hand, we can learn the worth of an action given a state; the former being based on value and the 
+latter is known as policy-based or Q, for quality of policy.
 
+Applications of reinforcement learning are varied and currently under development in fields such as vehicle control, robotics,
+gaming  and prediction of streaming data such as that of financial applications to name a few.
 
-Applications of reinforcement learning are varied and curretly under development in fields such as vehicle control, robotics,
-prediction of streaming data such as that of financial applications and gaming to name a few.
-
-On their paper regarding evolutionary neural networks for playing othello, Moriarty and Miikkulainen state, 'games are an important domain for studying problem-solving strategies.'\cite{Moriarty93evolvingcomplex}
-Traditionally games, due to their well-defined rules, state-transitions and goals, have made a good sandbox for the development of
+On their paper regarding evolutionary neural networks for playing othello, Moriarty and Miikkulainen state, 'games are an important domain for studying problem-solving strategies\cite{Moriarty93evolvingcomplex}.'
+Traditionally, due to their well-defined rules, state-transitions and goals, games have made a good sandbox for the development of
 any form of intelligent agents.
 
-Much has been achieved in this field, recently Google's Alpha-go bested top-ranking go-player Lee Sedol. Go had traditionally been
-seen as the unattainable goal in cmoputer game-playing given the vastness of it's state-space. Alpha-go achieved this outstanding 
+All approaches to game-playing agents share one goal, to reduce the scope of the state-space in which a search for optimal action takes place. Some approaches
+use expert-knowledge, such as is the case with minimax using heuristic functions. Statistically informed methods such as the one I have implemented strive to not so much prune
+the search space but to redistribute the task so that when an evaluation is needed, an exploration o a similar state-space has already been performed. They achieve this 
+by first widely exploring the state-space (train) in order to learn what sort of branches of said space to discard and which sort of branches tend to lead to better outcomes.
+
+For this project, I have chosen othello given its somewhat restricted scope; there is only one sort of token, two players, a limited number of moves per match ($moves\leq60$), 
+the branching factor is relatively small and the outcome is \emph{zero-sum}. Originally I had planned to train the network with labeled board configurations but finding or creating a sufficient data-set
+proved to be much more difficult than anticipated; which is the reason for having subsequently chosen RL.
+
+\subsection{State-of-the-art}
+Much has been achieved in the field of game-playing agents, recently Google's Alpha-go bested top-ranking 
+go player Lee Sedol. Go has frequently been mentioned as the unattainable goal in computer game-playing 
+given the vastness of its state-space. Alpha-go achieved this outstanding 
 result with the combination of different strategies, via 3 Neural 
-Networks\cite{AlphaGo}. One of the networks is a fully connected value 
-network while the other two are policy networks specialized for speed 
-and accuracy respectively. Another milestone in the field, is a deep policy network created by DeepMind which has learnt, with no human intervention, how to 
-play Atari games at a very high level.
+Networks\cite{AlphaGo}. The networks were trained with different methods, including playing against random agents and each other as well
+as deterministic expert-knowledge based agents. 
+One of the networks is a fully connected value 
+network with a single output while the other two are policy networks specialized for speed 
+and accuracy respectively, each treating the classification problem as a multi-class classification, outputting values for every square on the board. 
+
+Another milestone in the field, is a deep policy network created by DeepMind which has learned, with no human intervention, how to 
+play Atari games at a very high level\cite{demistyfyingRL}.
 
 %------------------------ Description ------------------------%
-\section{Description of approach}
--Many forms of TD learning (cite paper)\\
+\section{Description of approach}\label{description}
+\subsection{Model choices: TD - flavor}\label{sec:tdFlavor}
+There are several formulations for TD learning \cite{Tanner:2005}, including policy or Q based and value based. I have chosen to use the
+TD-($\lambda$) formulation from Tesauro's classic work on
+Backgammon\cite{Tesauro92practicalissues} which is well suited for neural networks. In Tesauro's work, given an outcome at the end of the game ,
+updates depend on the difference between predictions at successive states.
+\[\Delta_{w_t} = \alpha(P_{t+1} - P_t)\sum_{k=1}^{t} \lambda^{t-k}\nabla_w P_k  ,\quad 0 \leq \lambda \leq 1 \]
 
--What we do, see the ideal sequence of time-discounted predictions as a smooth progression (*Think of a more mathematically friendly term)
----describe the td error equation (requires reading Tesauro a bit more)\\
+Where $\gamma$ is the discount factor for rewards, $\lambda$ is the relevance of past actions wrt the weight updates. We can apply an update every turn
+to minimize the difference between state appraisal at consecutive states $s_t$, $s_{t+1}$ and as we do this, we keep a cached copy of the gradients for future updates.
+At end-game, a final update is performed given the difference between the appraisal of the second-to-last state and the final outcome.
 
--We use a convolutional net and a fc net (sort of justification)
----Justification and description of convolutional nets are intermingled---justify the lack of pooling (look for citation)\\
+%The variation I have chosen, is based on a different loss function. I use a form of the Bellman equation, supposing all states contributed equally to the outcome and the 
+%reward or cost $R$ at each state were equal to the current $R$ plus all the discounted future $R$s:
+%\begin{equation}\label{eq:Bellman}
+%\begin{aligned}
+%	 V(s_t) =& R(s_t) + \gamma (R(s_{t+1}) + \gamma (R(s_{t+2})\ldots + \gamma (R(s_{T}))\ldots)) \\
+%	 V(s_t) =& R(s_t) + \sum\limits_{k=1}^{T-t}\gamma^k R(s_{t+k})
+%\end{aligned}
+%\end{equation}
+%Under this model, for a game in which there is only one reward at end-game, it stands to reason that the ideal value function of each state $s_t$ at time $t$, leading to the 
+%outcome $R(s_T)$ at end-game time $T$ should be $\gamma^{T-t}R(s_T)$. The difficulty for implementation of this model is the fact that at time $t=0$, we cannot know the outcome
+%$R(s_T)$ for the match. Therefore, we play the match in its entirety in order to \textit{peek} at the outcome, storing each state $s_t$ in a buffer. Once we have observed the outcome, we train the model under the assumption
+%that the target $V^*(s_t)$ is of the form $V^*(s_t) = \gamma^{T-t}R(s_T)$.
+%And since the network parameters are updated from the re-evaluated board configurations $s_t, t \in [0, T]$, then we also define $V'(s_t)$ to be the network's value for a
+%given board configuration with it's updated parameters. Thus the loss function $l$ is of the form:
+%\[
+%l_t = \frac{1}{2} \cdot | V^*(s_t) - V'(s_t)|^2
+%\]
+%In the same way that the original $TD(\lambda)$ algorithm uses them, I have also used the accumulation of previous network gradients for the gradent-descent optimizer, but at the time of writing this report I'm not sure of the 
+%effectiveness of this approach.
 
-Other approaches and why we don' t use them
----Q-learning, currently mentioned often. Difference between Value expansion and q or policy expansion and implications for the problem
----Older - ENN - interesting but requires starting generations very much in advance\\
+Much literature can be found recently regarding Q-learning and deep-Q networks, however, I found this approach to be unsuitable for othello since the set of available actions
+(and therefore of potential policies) depends on the current state and varies greatly from one state to another, therefore finding the right policy for the total potential actions (64, where an
+action can be seen as laying down a token on the board) is an inadequate choice when each state we will have an average of 7 available actions.
+
+Another interesting optimization algorithm for othello-playing networks is based on genetic-algorithms or evolutionary neural networks, 
+ENNs\cite{chellapilla1999evolution}\cite{Moriarty93evolvingcomplex}\cite{chong2005}. This seems like an effective approach but the time needed to spawn multiple generations proved
+to be far greater than the time before the project's due date.
 
 %------------------------ Setup ------------------------%
 \section{Setup}
--using tensorflow, w / python 3.5 api and numpy
----how tensorflow works, still getting the hang of it\\
+The chosen environment for implementing the network was TensorFlow, given its current widespread use and rapidly growing user-base.
+In order to run TensorFlow, an Anaconda/python 3.5 environment was created on windows' included bash/ubuntu. The environment must be active for python to detect the TensorFlow v0.12 
+module. This makes the code somewhat less portable than what I originally intended. 
 
--Brief description of the board model as an input matrix
--Description of the network (Latex NN package?)
+\subsection{Network Implementation}
+A good deal of effort for this project was placed in learning to use the TensorFlow packages from Google and in deciding a proper network configuration.
+Not much can be written regarding the environment  except that it represents a bit of a paradigm shift from the dominant more linear sort of programming.
+In order to avoid the overhead incurred by interfacing Python code with the more efficient optimized engine,
+Tensorflow requires defining graphs of operations which are then executed as a batch in the back-end the moment one part of the graph is 
+evaluated (eg the net's output). Additionally, TensorFlow uses tensors or multi-dimensional matrices, which is not unlike Matlab or Numpy and well suited for the task.
 
---Avoue qu' il y a knowledge representation - we avoided the symmetry proposed by Ugosky(cite) given what he describes as a problem but
-expanded the idea
+The implemented network receives a batch of boards representing the possible resulting configurations or states $s_{t+1}$ given the current state $s_t$. The expected output is the argument maximizing the value
+of the successor state over all available actions $a$:
+\[
+	out = \arg\max_a(V(s_t,a))
+\] A board is an $8\times8$ matrix with zero-entries at unoccupied positions, 1 for each position with a black token and -1 for each square with a white token.
 
---Important to mention: output is squashed token ratio\\
+Regarding the net architecture, we have chosen to use an informed architecture. In other words, the design of the network is thought out for the particular task at hand, and not necessarily with 
+generalization in mind. The ANN consists of three conv-nets running in parallel and feeding their respective outputs to a
+fully connected net comprised of two hidden layers of 64 and 32 units respectively as well as one output activation unit at the end. 
+One of the conv-nets receives an $8\times1$ window sliding across columns and rows of the board, another receives 
+a $3\times3$ window placed at corners and mid-section of the board. The remaining conv-net receives the board diagonals.
 
--Routine for training / testing - given time\\
+Like many board games, othello has patterns that can be strategically significant yet they are highly sensitive to position. In other words, a certain configuration in a corner has 
+vastly different implications than it would have if it were 1 row or column inwards. Therefore, we use convolutional networks to find these patterns but suppose the weighting of said patterns to be
+highly dependent on their location on the board. For this reason, we have avoided the pooling layer typically implemented at the end of a convolutional layer. We use three parallel convolution nets 
+for the purpose of discovering features over different views of the board. 
 
-Justification of training against a random player, brief mention of next steps
----Exploration of the space (exploration/exploitation)
---question: is playing black generally a disadvantage? nets tend to start with more losses than wins
---question: is playing whites (times -1) much different\\
+We first pre-process our board by generating a $<batchSize>\times8\times8\times8$ tensor with all possible flips and rotations of the board. The flips and rotatoions of the board are fed into the nets in the guise of channels, borrowing from
+the image processing origin of convolution nets. For the conv-net specialized in rows and columns, as well as the one specialized in diagonals,
+only the four flips, and not the rotations are fed into the net, in an $<batchSize>\times8\times1\times4$ tensor. For the $3\times3$ window, we cut a $5\times5$ corner-section across all symmetries 
+$<batchSize>\times8\times8\times8$ tensor, yielding a $<batchSize>\times5\times5\times8$ tensor. The convolutions
+have the following strides: for the row/column net, strides are $1\times1$ with no padding, allowing the window to slide over 8 positions 
+in each one of the four symmetries. For the smaller, $3\times3$ sliding window, the strides are $2\times2$
+with no padding, allowing the window to slide over four positions of the smaller $5\times5$ sections of the flipped and rotated board. For the diagonals, there is no stride; a conv-net has been used exclusively for harnessing 
+the built-in capabilities of processing different channels.
+
+The three nets output to different feature filters, allowing each net to automatically discover features in the given board configurations.
+Both the row/column and the $3\times3$ filters output to 10 feature-maps, while the diagonal, outputs to only 4 features.
+
+All feature-maps are then output to a 64-unit layer which is fully connected to a 32-unit layer and which in turn outputs a single value, per each board in the batch. The entirety of the nets units have a hyperbolic tangent function, allowing
+for the negative rating of certain configurations and all units have a bias of 1\footnote{actually in the unit trained for this submission, biases were 0.1 due to a typo in the code, but this has been corrected in the script}. 
+The weights of the net trained for the current submission were initialized with tensorflow's truncated normal generator with default values of $\mu=0, \sigma=1.0$.
+
+The parameters used for the implementation were:
+\begin{itemize}
+	\item{Optimizer - Gradient Descent}
+	\item{Learning rate - 0.01}
+	\item{Discount factor $\gamma$ - 0.9}
+	\item{Temporal difference weighting $\lambda$ - 0.3}
+	\item{$P(Dropout)$ during training = 0.3\footnote{Dropout was added almost as an afterthought, inspired by Moriarty and Miikkulainen's ENN implementation where reportedly encoding the network configuration 
+	as part of its `genome' gave a significant performance boost to the evolutionary optimization.}}
+\end{itemize}
+
+
+\subsection{Testing/training routine}
+In order for the network to learn, it plays against a random player-agent, which plays a randomly chosen move from all available moves. 
+The network can be assigned either black or white at random for each match since opening the game (black) or following (white) have different implications for game-play.
+This requires multiplying the input matrix representing a board by -1 in the case that the network plays white, in order for the model to fully exploit whatever it has learned
+while playing either color.
+
+The use of a random player-agent also palliates one of the biggest issues in reinforcement learning which is the explore exploit dilemma whereby acting on learned ideal actions diminishes the potential to explore the 
+solution-space further or conversely, the earnest exploration of the solution-space implies a much slower convergence towards ideal state-appraisal or policies. The network agent will be drawn to repeat patterns it has discovered
+to be fruitful while the random player-agent will impose a certain amount of exploration.
+
+Since the network trains against a random agent, there is little risk of it over-specializing or overfitting, as would be the case if it were to train against a deterministic agent. Due to this, there is little distinction between
+training and testing and the learning process yields a form of test result as it happens. Each move during a match in which learning takes place incurs a TD error, which is then used to update the weights as described in
+section \ref{sec:tdFlavor}. The value of the game's outcome is estimated to be of the form:
+\[
+R\left(s_{T}\right) = tanh\left(tokens_{network}-{tokens_{randomPlayer}1}\right)
+\]
+A count of matches won, lost or tied is updated after each iteration and is used to measure the progression of learning.
+
 
 %------------------------ Results ------------------------%
 \section{Results}
--Expected- evaluations of the board should move towards 0 at the onset and relatively smoothly progress towards the end result\\
 
-Problems constraining the obtained results - memory leak, resulting lack of time due to long training\\
+The implementation part of the network has presented a fair set of issues, many of them which simply require more time to find and solve. The performance of the net is currently far from
+what I expected but the process has been highly educational regarding putting together a network of this nature.
 
-No comparison of different lambda, gamma, lr dropout values -- many hyper-params to tune!\\
+Firstly, the constraints regarding putting together computation graphs, as is required by tensorflow, were difficult to assimilate and still, to the time of writing this report, my code suffers from some form of memory
+leak that severely impacts performance after many iterations, requiring saving parameters as a checkpoint file, exiting Python\footnote{or deleting modules...}, reimporting modules, restoring the checkpoint 
+and restarting training. 
+These steps  must be performed every 30 to 100 iterations in order to maintain a reasonable pace of learning, otherwise playing a game and performing backpropagating can take up to 10 minutes after training five or six hours.
+This issue has made it difficult to train the network over a sufficiently large set of iterations in order for it to significantly learn as well as evaluating performance and tuning parameter settings.
 
-convergence? How does it stack up. How many epochs, plots of wins\\
+Another problem encountered is that the network tends to be overly optimistic\footnote{Bah, humbug!} outputting values close to 1 for the best-appraised state or board configuration from a given batch even when 
+the network is 1 move away from losing a match. 
 
-plots of token ratios per epoch
+Additionally, the black-box nature of an ANN has made it somewhat difficult to evaluate the learning process of the net with anything else than its (somewhat feeble) performance.
 
+At the time of writing this report, many such problems had just surfaced so evidence for the previous network's performance is included. I have re-written a good deal of the code, which I include as a reference but unfortunately
+cannot include results as this would require leaving the network training for quite a few hours still. I have started training it and the memory-leak seems to be at least partially solved and value appraisals seem to be closer to target and improving 
+slightly over epochs, as are errors per prediction.
 
+I have attached a long log file for the previous' net training over slightly more than 1000 epochs. (Warning, the file is close to 895,000 lines with Unix line termination -not CR/LF-  if opening in a Windows environment use something such as Notepad++ and do not use 
+Notepad since formatting will be broken).
+
+Logging is given  in an informative fashion such as:
+\begin{verbatim}
+(
+    (0, 0, 0, 0, 0, 0, 0, 0)
+    (0, 0, 0, 0, 0, 0, 0, 0)
+    (0, 0, 0, 0, 0, 0, 0, 0)
+    (0, 0, 0, B, W, 0, 0, 0)
+    (0, 0, 0, W, B, 0, 0, 0)
+    (0, 0, 0, 0, 0, 0, 0, 0)
+    (0, 0, 0, 0, 0, 0, 0, 0)
+    (0, 0, 0, 0, 0, 0, 0, 0)
+)
+
+Black  plays:
+max value v at index idx is:  0.770257 2
+(
+                   ...0, 0, 0, 0)
+...
+...
+                   ...W, B, B, B)
+)
+
+White 's turn:
+(
+    (W, W, W, W, W, B, B, W)
+    (W, B, B, B, B, B, B, B)
+    (W, W, B, B, B, B, W, W)
+    (W, B, B, B, W, B, W, W)
+    (W, W, B, B, B, B, W, B)
+    (W, W, B, W, W, W, B, B)
+    (W, W, W, W, W, B, B, B)
+    (B, W, W, W, W, B, B, B)
+)
+
+White 's turn:
+no moves
+White 's turn:
+Game Over
+Score: Black -  32  White -  32
+Loss at end-game:  [[-0.79794914]]
+The round took: 9.991903066635132  seconds.
+Up to now:  3  wins,  2  losses and  1  ties.
+
+\end{verbatim}
+
+A plot paints an eloquent picture regarding the unimpressive performance of the previous version of the network. The previous version is included in the deliverable in a folder labeled `oldAndBuggy'
+and the current version is included at the base layer as it seems to perform significantly better.
+
+The code is also printed at the end of the document for the reader's convenience.
+
+\begin{figure}[H]
+\begin{center}
+	\includegraphics[width=4in, trim=0.7in 2.7in 1in 2.7in]{winsLosses}
+    \caption{Wins and losses per epoch, black bars indicate a win, positive wins are wins by the model, negative wins are matches won by the random player-agent.}\label{fig:winsLosses}
+\end{center}
+\end{figure}
+
+\clearpage
 
 %----------------- from future import work -------------------%
 \section{Future work}
-Compare initialization vs randomPlayer with different parameters
+The project has been very satisfactory in so far as I have gained experience designing and implementing a network of non-trivial proportions, yet there are several avenues that are left open for future work. Further 
+fixing the memory leak in my code is a necessary precondition for any one of them. I list the three most important ones in what seems to me to be order of relevance.
 
-Initialize several nets against randomPlayer
+\subsection{Cross-validate different parameter settings}
+Choosing one model, perform training against a random player agent with different values for the learning rate, $\gamma$, $\lambda$ and dropout.
 
-pit them against each other for training
+\subsection{Merge with principles of GAs}
+Supposing that the network were to achieve a reasonable level of performance playing against a random player-agent, a logical next step would be to have a network learn from playing another network. 
+However, if the same model plays against itself, the risk of overfitting is very high, where the network will most likely learn given a very narrow set of responses to its own actions (namely, its own responses).
+One simple way to avoid this would be to train several nets against random player-agents up to a reasonable performance level and then have them all play/train against each other choosing pairs randomly for every match.
+This would require a true division of training/testing, potentially against well established deterministic agents. Potentially, implement ENNs such as the ones proposed in Chelapilla\cite{chellapilla1999evolution}, 
+Moriarty and Miikkulainen\cite{Moriarty93evolvingcomplex} or Chong\cite{chong2005} and combine both approaches.
 
-they should all develop unique strategies so then they help each other out\\
+\subsection{Introduce a small noise component}
+If overfitting is the Achilles' tendon of Neural Nets, one simple solution to this problem is the addition of jitter or a small noise component to the inputs. Since our inputs have only three possible values per square,
+adding jitter might yield some benefits by smoothing the output function slightly. There is very little implementation and computational overhead needed in order to test this idea; it's probably worth it.
 
-Maybe combining training with random player and then Gen Algo approach?
+\clearpage
+%----------------Code ----------------------------------%
+\section{Appendix i - Code}
+\subsection{ANN}
+\lstinputlisting[breaklines]{tf/othelloNetV2.py}
+\clearpage
+\subsection{interface}
+\lstinputlisting[breaklines]{tf/othello_interface_v2.py}
+\clearpage
+\subsection{The game}
+\lstinputlisting[breaklines]{tf/othello.py}
+\clearpage
+\subsection{The board}
+\lstinputlisting[breaklines]{tf/board.py}
+\clearpage
+\subsection{Positions on the board}
+\lstinputlisting[breaklines]{tf/position.py}
 
-
-
-
-
-
+\clearpage
 %------------------------------------------- Bibliography ----------------------------------------------------
-\bibliography{ML-AI-proj-2016-proposal}
+\bibliography{ML-AI-proj-2016}
 \bibliographystyle{plain}
 \end{document}

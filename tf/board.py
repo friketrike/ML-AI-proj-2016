@@ -1,3 +1,7 @@
+# COMP 6321 Machine Learning, Fall 2016
+# Federico O'Reilly Regueiro - 40012304
+# Final project - othello with neural nets
+
 import copy
 import position as p
 
@@ -5,10 +9,8 @@ BOARD_SIZE = 8
 BLACK = 1
 WHITE = -1
 
-
 def opposite(turn):
     return turn * -1
-
 
 class Board:
     directions = {'up': p.Pos.up, 'left': p.Pos.left, 'up_left': p.Pos.up_left, 'up_right': p.Pos.up_right,
@@ -30,6 +32,11 @@ class Board:
             self.squares[s-1][s-1] = BLACK
             self.squares[s-1][s] = WHITE
             self.squares[s][s-1] = WHITE
+
+    def relativize(self, color):
+        for row in self.squares:
+            for square in row:
+                square *= color
 
     def to_string(self):
         the_str = "(\n"

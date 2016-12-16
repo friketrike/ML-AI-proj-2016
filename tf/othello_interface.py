@@ -1,3 +1,7 @@
+# COMP 6321 Machine Learning, Fall 2016
+# Federico O'Reilly Regueiro - 40012304
+# Final project - othello with neural nets
+
 import othello as o
 import position as p
 import board as b

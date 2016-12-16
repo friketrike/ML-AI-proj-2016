@@ -1,23 +1,18 @@
+# COMP 6321 Machine Learning, Fall 2016
+# Federico O'Reilly Regueiro - 40012304
+# Final project - othello with neural nets
+
 import othello_interface as oi
 import numpy as np 
 
-# outcomes = []
-# total_losses = []
-# log = open('./othellog.txt', 'w')
-
 # restoring broken session
-oi.wins = 322
-oi.losses = 270
-oi.ties = 22
+oi.wins = 530
+oi.losses = 471
+oi.ties = 38
 
 oi.restore_checkpoint()
 
-for x in range(10000):
+for x in range(10000): # one may dream...
     outcome, total_loss = oi.play_net(True)
-    #outcomes.append(outcome)
-    #total_losses.append(total_loss)
-    #if x%500 == 0:
-    #    print(outcomes, file=log)
-    #    print(total_losses, file=log)
 
 

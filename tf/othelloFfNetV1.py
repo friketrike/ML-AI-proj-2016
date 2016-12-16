@@ -1,3 +1,7 @@
+# COMP 6321 Machine Learning, Fall 2016
+# Federico O'Reilly Regueiro - 40012304
+# Final project - othello with neural nets
+
 import tensorflow as tf
 import numpy as np
 
@@ -72,7 +76,7 @@ class othello_net():
         self.conv1_weights = self.weight_variables([1, 8, 4, 10])
         self.conv1_bias = self.bias_variables([1, 1, 1, 10])
         
-        # Chop 6x5 part of the board and slide a 3x3 window over it
+        # Chop 5x5 part of the board and slide a 3x3 window over it
         self.conv2_weights = self.weight_variables([3, 3, 8, 10])
         self.conv2_bias = self.bias_variables([1, 1, 1, 10])
         
