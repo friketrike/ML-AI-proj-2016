@@ -46,8 +46,10 @@ class othello_net():
 
     # When we want to start a new match we need to clear some variables
     def reset_for_game(self):
-        self.accum_grads = []
-        self.accum_grad = []
+        #self.accum_grads = []
+        #self.accum_grad = []
+        _ = [self.lambda_resets[idx] for idx in range(self.gaccum_list.__len__())]
+        #self.initialize_accum_grad_vars()
         self.values_history = []
 
     # give an appraisal given a board configuration, train if told to do so
@@ -66,13 +68,6 @@ class othello_net():
                                                     self.batch_size: batch_size}) # self.keep_prob: 1,
             idx = np.argmax(v, 0)
             self.values_history.append(v[idx])
-            #if self.values_history.__len__() > 1:
-            #    loss = self.values_history[-1] - self.values_history[-2]
-            #    if verbose:
-            #       print('loss: ', loss[0][0])
-            #    for outer_index, vars in enumerate(self.vars_list):
-            #        self.opt.apply_gradients([(loss * self.accum_grads[outer_index], vars)])
-            #_ = [(self.update_lambda_grads(g_v[0], index), g_v[1]) for index, g_v in enumerate(grad_var_list)]
             _ = [self.lambda_updates[idx] for idx in range(self.gaccum_list.__len__())]
         else:
             v = session.run(self.h_out, feed_dict={self.boards_half_sym: half_sym,
@@ -85,12 +80,13 @@ class othello_net():
         return idx[0], v[idx][0][0] # TODO this looks ugly fix upstream
 
     # NOTE if training, this should be called at the end of a match
-    def learn_from_outcome(self, tally, verbose=False):
+    def learn_from_outcome(self, tally, session, verbose=False):
         loss = np.tanh(tally/32) - self.values_history[-1]
         if verbose:
             print('Loss at end-game: ', loss)
-        for outer_index, vars in enumerate(self.vars_list):
-            self.opt.apply_gradients([(loss * self.gaccum_list[outer_index], vars)])
+        for idx, vars in enumerate(self.vars_list):
+            #self.opt.apply_gradients([(loss * self.gaccum_list[idx], vars)])
+            session.run(self.gradient_applications[idx], feed_dict={self.outcome_val:loss})
 
     # TODO fix this, for some reason it's broken on the tf side
     def set_epochs(self, epochs):
@@ -129,10 +125,16 @@ class othello_net():
 
     def append_lambda_op(self):
         self.lambda_updates = []
+        self.lambda_resets = []
+        self.gradient_applications = []
         for idx, gv in enumerate(self.grad_var_list):
             self.lambda_updates.append(
                 tf.add(self.gaccum_list[idx].__mul__(self.lambdaa),
                        gv[0]))
+            self.lambda_resets.append(self.gaccum_list[idx].__mul__(0))
+            self.gradient_applications.append(
+                self.opt.apply_gradients(
+                    [(self.gaccum_list[idx].__mul__(self.outcome_val), gv[1])]))
 
     def initialize_train_vars(self):
         self.epochs = tf.Variable(0)
@@ -194,9 +196,3 @@ class othello_net():
         #self.h_fc2_drop = tf.nn.dropout(self.h_fc2, self.keep_prob)
         self.h_out = tf.nn.tanh(tf.matmul(self.h_fc2, self.out_weights) + self.out_bias)
 
-    # def update_lambda_grads(self, grad, idx):
-    #     if not self.accum_grads or idx == self.accum_grads.__len__():
-    #         self.accum_grads.append(grad)
-    #     else:
-    #         self.accum_grads[idx].__mul__(self.lambdaa)
-    #         self.accum_grads[idx] = tf.add(self.accum_grads[idx], grad)

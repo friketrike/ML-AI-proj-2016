@@ -59,7 +59,7 @@ def play_net(train=False, verbose=False):
     color_blind_outcome = {'net': outcome['Black'], 'opponent': outcome['White']}
     score_series.append(color_blind_outcome)
     if train:
-        on.learn_from_outcome(color_blind_outcome['net'] - color_blind_outcome['opponent'])
+        on.learn_from_outcome(color_blind_outcome['net'] - color_blind_outcome['opponent'], session)
     if score_series[-1]['net'] > score_series[-1]['opponent']:
         wins += 1
     elif score_series[-1]['net'] < score_series[-1]['opponent']:
