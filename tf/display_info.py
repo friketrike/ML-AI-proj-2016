@@ -49,7 +49,7 @@ def load_and_display():
     plt.ylabel('accumulated outcomes')
     plt.show()
 
-    plt.plot(np.divide((np.cumsum((n - o) > 0))+1, (np.cumsum(n-o) < 0)+1, 'g', np.ones(n.__len__()), 'k--'))
+    plt.plot(np.divide((np.cumsum((n - o) > 0))+1, np.cumsum((n-o) < 0)+1), 'g', np.ones(n.__len__()), 'k--')
     plt.title('Ratio of wins over losses over epochs')
     plt.xlabel('epochs')
     plt.ylabel('wins to losses')
