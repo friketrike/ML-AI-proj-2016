@@ -20,14 +20,13 @@ class othello_net():
             self.initialize_fc_weights()
             self.initialize_board_placeholders()
             self.initialize_training_placeholders()
-            # self.initialize_turn_boards()
             self.initialize_train_vars()
             self.initialize_convs()
             self.initialize_ff()
             self.accum_grads = []
             self.discount_factor = 0.9
-            self.lambdaa = 0.7
-            self.opt = tf.train.GradientDescentOptimizer(1e-4)
+            self.lambdaa = 0.75
+            self.opt = tf.train.GradientDescentOptimizer(3e-2)
             self.vars_list = [self.conv1_weights, self.conv1_bias, 
                               self.conv2_weights, self.conv2_bias,
                               self.conv_diag_weights, self.conv_diag_bias,
@@ -46,10 +45,7 @@ class othello_net():
 
     # When we want to start a new match we need to clear some variables
     def reset_for_game(self):
-        #self.accum_grads = []
-        #self.accum_grad = []
         _ = [self.lambda_resets[idx] for idx in range(self.gaccum_list.__len__())]
-        #self.initialize_accum_grad_vars()
         self.values_history = []
 
     # give an appraisal given a board configuration, train if told to do so
@@ -64,7 +60,8 @@ class othello_net():
             v, grad_var_list = session.run([self.h_out, self.grad_var_list],
                                            feed_dict={self.boards_half_sym: half_sym,
                                                     self.boards_chopped: chopped,
-                                                    self.boards_diag: diag,
+                                                    self.boards_diag: diag, 
+                                                    self.keep_prob: 0.7,
                                                     self.batch_size: batch_size}) # self.keep_prob: 1,
             idx = np.argmax(v, 0)
             self.values_history.append(v[idx])
@@ -72,7 +69,8 @@ class othello_net():
         else:
             v = session.run(self.h_out, feed_dict={self.boards_half_sym: half_sym,
                                                    self.boards_chopped: chopped,
-                                                   self.boards_diag: diag,
+                                                   self.boards_diag: diag, 
+                                                   self.keep_prob: 1,
                                                    self.batch_size: batch_size}) #self.keep_prob: 1,
             idx = np.argmax(v, 0)
         if verbose:
@@ -81,12 +79,11 @@ class othello_net():
 
     # NOTE if training, this should be called at the end of a match
     def learn_from_outcome(self, tally, session, verbose=False):
-        loss = np.tanh(tally/32) - self.values_history[-1]
+        error = self.values_history[-1] - np.tanh(tally/32)
         if verbose:
             print('Loss at end-game: ', loss)
         for idx, vars in enumerate(self.vars_list):
-            #self.opt.apply_gradients([(loss * self.gaccum_list[idx], vars)])
-            session.run(self.gradient_applications[idx], feed_dict={self.outcome_val:loss})
+            session.run(self.gradient_applications[idx], feed_dict={self.error: error})
 
     # TODO fix this, for some reason it's broken on the tf side
     def set_epochs(self, epochs):
@@ -134,13 +131,12 @@ class othello_net():
             self.lambda_resets.append(self.gaccum_list[idx].__mul__(0))
             self.gradient_applications.append(
                 self.opt.apply_gradients(
-                    [(self.gaccum_list[idx].__mul__(self.outcome_val), gv[1])]))
+                    [(self.gaccum_list[idx].__mul__(self.error), gv[1])]))
 
     def initialize_train_vars(self):
         self.epochs = tf.Variable(0)
 
     def initialize_board_placeholders(self):
-        #self.boards = tf.placeholder(tf.float32, shape=[None, 8, 8])
         self.boards_half_sym = tf.placeholder(tf.float32, shape=[None, 8, 8, 4])
         self.boards_chopped = tf.placeholder(tf.float32, shape=[None, 5, 5, 8])
         self.boards_diag = tf.placeholder(tf.float32, shape=[None, 8, 1, 4])
@@ -148,7 +144,7 @@ class othello_net():
     def initialize_training_placeholders(self):
         self.batch_size = tf.placeholder(tf.int32)
         self.keep_prob = tf.placeholder(tf.float32)
-        self.outcome_val = tf.placeholder(tf.float32)
+        self.error = tf.placeholder(tf.float32)
 
     @staticmethod
     def turn_boards(boards):
@@ -191,8 +187,8 @@ class othello_net():
         conv_diag_flat = tf.reshape(self.h_conv_diag, [-1, 1*1*4])
         conv_out = tf.concat(1, [conv1_flat, conv2_flat, conv_diag_flat])
         self.h_fc1 = tf.nn.tanh(tf.matmul(conv_out, self.fc1_weights)+self.fc1_bias)
-        #self.h_fc1_drop = tf.nn.dropout(self.h_fc1, self.keep_prob)
-        self.h_fc2 = tf.nn.tanh(tf.matmul(self.h_fc1, self.fc2_weights) + self.fc2_bias)
-        #self.h_fc2_drop = tf.nn.dropout(self.h_fc2, self.keep_prob)
-        self.h_out = tf.nn.tanh(tf.matmul(self.h_fc2, self.out_weights) + self.out_bias)
+        self.h_fc1_drop = tf.nn.dropout(self.h_fc1, self.keep_prob)
+        self.h_fc2 = tf.nn.tanh(tf.matmul(self.h_fc1_drop, self.fc2_weights) + self.fc2_bias)
+        self.h_fc2_drop = tf.nn.dropout(self.h_fc2, self.keep_prob)
+        self.h_out = tf.nn.tanh(tf.matmul(self.h_fc2_drop, self.out_weights) + self.out_bias)
 
