@@ -1,6 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
+import os
+
+
+pckl_fname = 'net_other.pckl'
 
 
 def moving_average(a, n=3):
@@ -10,7 +14,9 @@ def moving_average(a, n=3):
 
 
 def load_and_display():
-    f = open('net_other.pckl', 'rb')
+    if not os.path.isfile(pckl_fname):
+        raise FileNotFoundError
+    f = open(pckl_fname, 'rb')
     x = pickle.load(f)
     f.close()
     n = []
