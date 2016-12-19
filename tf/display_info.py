@@ -36,8 +36,15 @@ def load_and_display():
     plt.show()
 
     mav2 = moving_average((n-o) > 0, n=250)
+    plt.plot(mav2, 'b', 0.5 * np.ones(mav2.__len__()), 'k--')
     plt.title('games won moving average, rectangular window, n=250')
     plt.xlabel('epochs')
     plt.ylabel('wins moving average')
-    plt.plot(mav2, 'b', 0.5*np.ones(mav2.__len__()), 'k--')
+    plt.show()
+
+    plt.plot(np.cumsum((n-o) > 0), 'g', np.cumsum((n-o) == 0), 'b', np.cumsum((n-o) < 0), 'r')
+    plt.legend(['wins', 'ties', 'losses'], loc='upper left')
+    plt.title('Progression of outcomes over epochs')
+    plt.xlabel('epochs')
+    plt.ylabel('accumulated outcomes')
     plt.show()
