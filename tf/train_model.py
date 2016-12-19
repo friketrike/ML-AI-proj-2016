@@ -19,6 +19,8 @@ for batch in range(200):
     for _ in range(1000):
         oi2.play_net(True)
     print('batch ', batch, ' took ', (time.time()-tic)/60, ' minutes')
+    tl = time.localtime()
+    print('finished at: ', tl.tm_hour, ':',tl.tm_min)
     oi2.save_checkpoint()
     oi2.save_checkpoint('SavedModels/otnetv2'+str(oi2.score_series.__len__())+'.ckpt')
     f = open(pckl_fname, 'wb')
