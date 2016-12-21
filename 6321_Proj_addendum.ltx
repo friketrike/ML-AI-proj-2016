@@ -1,0 +1,108 @@
+\documentclass{article}
+
+% \usepackage[margin=0.75in]{geometry}
+
+\usepackage{titlesec}
+\usepackage{cite}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{float}
+
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=4
+}
+
+
+\renewcommand{\thesubsection}{\thesection.\alph{subsection}}
+
+\begin{document}
+\title{Comp 6321 - Machine Learning - Project report addendum}
+\author{Federico O'Reilly Regueiro}
+\date{December 20$^{th}$, 2016}
+\maketitle
+
+%------------------------ Introduction ------------------------%
+\section{Some corrections and observations}\label{sec:observations}
+At the time of submission there was still a bug in the code that greatly hampered performance and thus there had been little chance of simulating enough matches to see a real trend in the network.
+ The bug has now been fixed by changing the way the gradient application functions are appended to the graph (init function starting at line 123), how these gradient applications are called (line 68) and how the gradients are reset(line 48 in the code in section \ref{code:netDef}.
+The original problem was that every epoch, an operation was being added to the computation graph, quickly consuming system memory. Now the operation is added only once to the graph and invoked by iterating a list of operation handles.
+
+
+\begin{figure}[H]
+\begin{center}
+	\includegraphics[width=5in, trim=0in 0in 0in 0in]{ratioWinsLosses}
+    \caption{Ratio of wins and losses per epoch, we can see that the ratio is slowly improving but still under the expected ratio $1.0$ for two random players.}\label{fig:winsLosses}
+\end{center}
+\end{figure}
+
+This has allowed me to run the code for a sufficient number of epochs\cite{Tesauro92practicalissues} to start seeing a trend in the network's performance as can be seen in figure \ref{winsLosses}. Performance is still far from what I expected and improvement in performance is rather slow. This could be due to a number of reasons. I explore the possible reasons and strategies to be taken to minimize them:
+\begin{itemize}
+	\item The network is too big: unlikely since some of the papers\cite{chong2005}\cite{chellapilla1999evolution}\cite{Leouski96whata} report reasonable performance with larger networks.
+	\item The learning rate is too low: possibly, Tesauro\cite{Tesauro92practicalissues} reports reasonable performance with a learning rate of 0.1 after 125,000 iterations. The learning rate in the present implementation is one third of that.
+	\item The nature of Othello, where the board configuration and particularly the material count can so quickly change, makes it difficult for the model to converge and it will simply take longer than Backgammon. Leouski and Utgoff \cite{Leouski96whata} indicate similar performance with a NN based on board symmetry and only report better performance with a three-network model where responsibilities for opening, middle and end-game are spread across the three models.
+	\item Either $\lambda$ or $\gamma$ are improperly tuned: different $\lambda$ or $\gamma$ settings might greatly impact the learning of the model. I have used Tesauro's reported values but given the aforementioned particularities of Othello, training might require different $\gamma$ or $\lambda$
+	\item The model from which we started is inadequate: gradient descent converges towards local minima and the model from which we started might have been close to a shallow local minimum, meaning that the model will never improve much. Try again with a different initial model whose random weights might be closer to a steeper minimum.
+	\item The preprocessing performed, introducing domain-knowledge, is actually of little use to the net. Maybe the choice of rows, columns, $3\times3$ windows and diagonals is a good human heuristic but harder to learn from for a NN. Try a raw board input or another sort of pre-processing.
+\end{itemize}
+
+\subsection{Repository}
+I will most likely continue to work on this code, which has found its home at http://github.com/friketrike/ML-AI-proj-2016 . 
+
+
+
+
+\clearpage
+%----------------Code ----------------------------------%
+\section{Appendix i - Code fixes}
+The memory leak was fixed by avoiding the addition of operations after initialization as described in section \ref{sec:observations}.
+\subsection{ANN}\label{code:netDef}
+\lstinputlisting[breaklines]{tf/othelloNetV2.py}
+\clearpage
+
+\subsection{interface}
+The code was modified in order to accomodate the net playing black or white with no change in its reading of the boards configuration (eg. lines 26, 32 and 64). Printing messages has been suppressed unless calling the interface with a boolean setting `verbose' (line 31) which is false by default. 
+\lstinputlisting[breaklines]{tf/othello_interface_v2.py}
+\clearpage
+\subsection{Driver for training the model, storing the model and a history of scores from simulated matches}
+The script facilitates training the model while saving both the model and the history of scores every 1000 epochs.
+\lstinputlisting[breaklines]{tf/train_model.py}
+\clearpage
+\subsection{Displaying results}
+Simple routine for loading and displaying results in another python interpreter while the model is still training.
+\lstinputlisting[breaklines]{tf/display_info.py}
+\clearpage
+%\subsection{The game}
+%\lstinputlisting[breaklines]{tf/othello.py}
+%\clearpage
+%\subsection{The board}
+%\lstinputlisting[breaklines]{tf/board.py}
+%\clearpage
+%\subsection{Positions on the board}
+%\lstinputlisting[breaklines]{tf/position.py}
+
+\clearpage
+
+%------------------------------------------- Bibliography ----------------------------------------------------
+\bibliography{ML-AI-proj-2016}
+\bibliographystyle{plain}
+\end{document}
