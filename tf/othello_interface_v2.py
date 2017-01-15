@@ -52,10 +52,11 @@ def play_net(train=False, verbose=False):
             print(game.turn_to_string(b.opposite(color)), '\'s turn:')
         done = not game.play_random_turn(b.opposite(color), verbose)
     outcome = game.board.get_score()
-    color_blind_outcome = {'net': outcome['Black'], 'opponent': outcome['White']}
+    color_blind_outcome = {'net': outcome['Black'], 'opponent': outcome['White'], 'error':0}
     if train:
         score_series.append(color_blind_outcome)
-        on.learn_from_outcome(color_blind_outcome['net'] - color_blind_outcome['opponent'], session)
+        error = on.learn_from_outcome(color_blind_outcome['net'] - color_blind_outcome['opponent'], session)
+        color_blind_outcome['error'] = error
     game.reset()
     on.reset_for_game()
     if verbose:

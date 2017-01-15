@@ -24,9 +24,9 @@ class othello_net():
             self.initialize_convs()
             self.initialize_ff()
             self.accum_grads = []
-            self.discount_factor = 0.9
-            self.lambdaa = 0.75
-            self.opt = tf.train.GradientDescentOptimizer(3e-2)
+            self.discount_factor = 0.999
+            self.lambdaa = 0.1
+            self.opt = tf.train.AdamOptimizer(1.0)
             self.vars_list = [self.conv1_weights, self.conv1_bias, 
                               self.conv2_weights, self.conv2_bias,
                               self.conv_diag_weights, self.conv_diag_bias,
@@ -61,7 +61,7 @@ class othello_net():
                                            feed_dict={self.boards_half_sym: half_sym,
                                                     self.boards_chopped: chopped,
                                                     self.boards_diag: diag, 
-                                                    self.keep_prob: 0.7,
+                                                    self.keep_prob: 1.0, # don't play with this while it doesn't work
                                                     self.batch_size: batch_size}) # self.keep_prob: 1,
             idx = np.argmax(v, 0)
             self.values_history.append(v[idx])
@@ -79,11 +79,13 @@ class othello_net():
 
     # NOTE if training, this should be called at the end of a match
     def learn_from_outcome(self, tally, session, verbose=False):
-        error = self.values_history[-1] - np.tanh(tally/32)
+        # TODO verify the sign of this error!
+        error = (self.values_history[-1] - np.tanh(tally/16))
         if verbose:
-            print('Loss at end-game: ', loss)
+            print('Loss at end-game: ', error) # want to know this for debugging purposes
         for idx, vars in enumerate(self.vars_list):
             session.run(self.gradient_applications[idx], feed_dict={self.error: error})
+        return error[0][0]
 
     # TODO fix this, for some reason it's broken on the tf side
     def set_epochs(self, epochs):

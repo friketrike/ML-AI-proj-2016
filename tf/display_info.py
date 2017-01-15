@@ -21,9 +21,11 @@ def load_and_display():
     f.close()
     n = []
     o = []
+    e = []
     for sc in x:
         n.append(sc['net'])
         o.append(sc['opponent'])
+        e.append(sc['error'])
 
     n = np.asarray(n)
     o = np.asarray(o)
@@ -43,15 +45,15 @@ def load_and_display():
     plt.ylabel('wins moving average')
     plt.show()
 
-    # plt.plot(np.cumsum((n-o) > 0), 'g', np.cumsum((n-o) == 0), 'b', np.cumsum((n-o) < 0), 'r')
-    # plt.legend(['wins', 'ties', 'losses'], loc='upper left')
-    # plt.title('Progression of outcomes over epochs')
-    # plt.xlabel('epochs')
-    # plt.ylabel('accumulated outcomes')
-    # plt.show()
+    mav3 = moving_average(e, window_length)
+    plt.plot(mav3, 'r')
+    plt.title('Errors moving average, rectangular window, n='+str(window_length))
+    plt.xlabel('epochs')
+    plt.ylabel('errors noving average')
+    plt.show()
 
     plt.plot(np.divide((np.cumsum((n - o) > 0))+1, np.cumsum((n-o) < 0)+1), 'g', np.ones(n.__len__()), 'k--')
-    plt.ylim([0.85, 1.02])
+    #plt.ylim([0.85, 1.02])
     plt.title('Ratio of wins over losses over epochs')
     plt.xlabel('epochs')
     plt.ylabel('wins to losses')
