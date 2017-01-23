@@ -30,7 +30,7 @@ def load_and_display():
     n = np.asarray(n)
     o = np.asarray(o)
 
-    window_length = n.__len__() / 10
+    window_length = n.__len__() // 10
     mav = moving_average((n-o), window_length)
     plt.plot(mav, 'b', np.zeros(mav.__len__()), 'k--')
     plt.title('scores-moving average, rectangular window, n='+str(window_length))

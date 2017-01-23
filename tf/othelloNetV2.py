@@ -187,7 +187,7 @@ class othello_net():
         conv1_flat = tf.reshape(self.h_conv1, [-1, 1*8*10])
         conv2_flat = tf.reshape(self.h_conv2, [-1, 3*3*10])
         conv_diag_flat = tf.reshape(self.h_conv_diag, [-1, 1*1*4])
-        conv_out = tf.concat(1, [conv1_flat, conv2_flat, conv_diag_flat])
+        conv_out = tf.concat([conv1_flat, conv2_flat, conv_diag_flat], 1)
         self.h_fc1 = tf.nn.tanh(tf.matmul(conv_out, self.fc1_weights)+self.fc1_bias)
         self.h_fc1_drop = tf.nn.dropout(self.h_fc1, self.keep_prob)
         self.h_fc2 = tf.nn.tanh(tf.matmul(self.h_fc1_drop, self.fc2_weights) + self.fc2_bias)

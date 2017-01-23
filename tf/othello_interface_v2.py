@@ -10,7 +10,7 @@ import othelloNetV2 as otnet
 import time
 import random
 
-session = tf.Session()
+session = tf.Session()#config=tf.ConfigProto(log_device_placement=True))
 game = o.game()
 on = otnet.othello_net(session)
 score_series = []

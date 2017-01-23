@@ -23,9 +23,9 @@ if not os.path.isdir('SavedModels'):
     print('Creating folder for saving checkpoints.')
     os.mkdir('SavedModels')
 
-for batch in range(2000):
+for batch in range(200):
     tic = time.time()
-    for _ in range(100):
+    for _ in range(1000):
         oi2.play_net(True)
     print('batch ', batch, ' took ', (time.time()-tic)/60, ' minutes')
     tl = time.localtime()
@@ -34,5 +34,5 @@ for batch in range(2000):
     pickle.dump(oi2.score_series, f)
     f.close()
     oi2.save_checkpoint()
-    #oi2.save_checkpoint('SavedModels/otnetv2_'+str(oi2.score_series.__len__())+'.ckpt')
+    oi2.save_checkpoint('SavedModels/otnetv2_'+str(oi2.score_series.__len__())+'.ckpt')
     
